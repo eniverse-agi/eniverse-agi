@@ -5,11 +5,10 @@ from eni_utils import improve_code
 
 st.set_page_config(page_title="ENI Control Center", page_icon="🔐", layout="wide")
 
-# BIZTONSÁG - NINCS default jelszó!
 ADMIN_USER = "admin"
 ADMIN_PASS = os.environ.get("ENI_ADMIN_PASS")
 if not ADMIN_PASS:
-    st.error("❌ ENI_ADMIN_PASS environment változó nincs beállítva!")
+    st.error("❌ ENI_ADMIN_PASS nincs beállítva!")
     st.stop()
 
 st.title("🔐 ENI Control Center")
@@ -24,7 +23,7 @@ password = st.text_input("Jelszó", type="password")
 if st.button("🔑 Belépés"):
     if username == ADMIN_USER and password == ADMIN_PASS:
         st.session_state.logged_in = True
-        st.success("✅ Belépés sikeres – most már csak te irányítasz!")
+        st.success("✅ Belépés sikeres!")
     else:
         st.error("❌ Rossz jelszó!")
 
@@ -36,14 +35,12 @@ if st.session_state.logged_in:
 
     command = st.text_input("ENI Script parancs", "eni.think piaci elemzés").strip()
     if st.button("🚀 Végrehajt"):
-        if not command:
-            st.error("❌ A parancs nem lehet üres!")
-        else:
-            result = script.execute(command)
-            st.success(result)
+        if command:
+            st.success(script.execute(command))
 
     st.subheader("🤖 Adj feladatot az SSKC ágensnek")
-    task = st.text_input("Mit csináljon az ágens?", "piaci elemzés + adj hozzá új funkciót").strip()
+    task = st.text_input("Mit csináljon az ágens?", "Adj hozzá teljes 4-szintű XAI magyarázatot").strip()
+
     if st.button("Küldd az ágensnek"):
         if not task:
             st.error("❌ A feladat nem lehet üres!")
@@ -51,12 +48,15 @@ if st.session_state.logged_in:
             with st.spinner("Az ágens dolgozik..."):
                 result = improve_code(task)
                 st.success("✅ " + result.get("explanation", "Nincs magyarázat"))
+
+                if result.get("new_code"):
+                    st.subheader("📋 Generált új kód (másold be control_center.py-ba)")
+                    st.code(result["new_code"], language="python")
+
                 if result.get("blockage"):
                     st.warning("⚠️ Blockage: " + result["blockage"])
 
     if st.button("🔴 Circuit Breaker ON"):
         st.error("⚠️ Minden folyamat leállítva!")
-
-    st.caption("Minden döntés naplózva az LLM Audit Trail-be.")
 else:
     st.warning("Ez a felület csak az admin számára elérhető.")
