@@ -31,13 +31,11 @@ if st.session_state.logged_in:
     st.subheader("📊 Aktuális állapot")
     st.info("Signalum Risk Level: **R0** | Swarm: 7 ágens aktív | LLM Audit: élő")
 
-    # ENI Script parancs
     command = st.text_input("ENI Script parancs", "eni.think piaci elemzés")
     if st.button("🚀 Végrehajt"):
         result = script.execute(command)
         st.success(result)
 
-    # Vész gomb
     if st.button("🔴 Circuit Breaker ON"):
         st.error("⚠️ Minden folyamat leállítva!")
 
@@ -47,10 +45,10 @@ if st.session_state.logged_in:
         try:
             with open("improvement.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
-            st.success(data.get("explanation", "Nincs magyarázat"))
+            st.success("✅ " + data.get("explanation", "Nincs magyarázat"))
             if data.get("blockage"):
                 st.warning("⚠️ Blockage: " + data["blockage"])
-        except:
+        except Exception as e:
             st.info("Az ágens lefutott, de a JSON olvasása nem sikerült.")
     else:
         st.info("Az autonóm SSKC ágens itt írja a magyarázatot, ha elakad vagy fejleszt. (Még nem történt változás.)")
