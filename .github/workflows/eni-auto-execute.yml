@@ -1,0 +1,43 @@
+name: ENI SSKC Auto-Execute + Redeploy Trigger
+
+on:
+  push:
+    paths:
+      - 'control_center.py'
+      - 'eni_utils.py'
+      - 'auto_executor.py'
+      - 'agi_core.py'
+    branches:
+      - main
+
+jobs:
+  auto-redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Trigger Render Redeploy (auto)
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            curl -X POST -H "Authorization: Bearer $RENDER_DEPLOY_HOOK" https://api.render.com/deploy/srv-...
+          else
+            echo "Render redeploy hook nincs beállítva – manuális redeploy szükséges"
+          fi
+
+      - name: Send Telegram summary
+        run: |
+          echo "✅ GitHub Actions: Auto-Execute sikeres! Commit: ${{ github.event.head_commit.message }}"
+          # Telegram értesítés (opcionális, később bővíthető)
