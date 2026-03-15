@@ -2,8 +2,12 @@ name: ENI Self-Improvement Agent (SSKC Loop)
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # minden éjszaka 3:00 UTC
+    - cron: '0 3 * * *'
   workflow_dispatch:
+
+# ←←← EZT A RÉSZT HOZZUK HOZZÁ (fontos!)
+permissions:
+  contents: write
 
 jobs:
   improve:
