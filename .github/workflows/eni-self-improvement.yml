@@ -1,0 +1,35 @@
+name: ENI Self-Improvement Agent (SSKC Loop)
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # minden éjszaka 3:00 UTC
+  workflow_dispatch:
+
+jobs:
+  improve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Futtatjuk az autonóm SSKC ágenst
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python eni_self_improver.py > improvement.json
+
+      - name: Commit ha javítás történt
+        run: |
+          git config user.name "ENI SSKC Agent"
+          git config user.email "agent@eniverse.org"
+          git add .
+          git commit -m "🤖 SSKC: Autonóm fejlesztés" || echo "No changes"
+          git push
