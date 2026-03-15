@@ -1,6 +1,6 @@
 class ENIScript:
     def __init__(self):
-        self.memory = {}  # Intelligence Bonding memória
+        self.memory = {}
 
     def execute(self, command: str):
         parts = command.strip().split(maxsplit=1)
@@ -12,16 +12,17 @@ class ENIScript:
         elif cmd == "eni.consensus":
             return f"⛓️ PoI Mesh konszenzus: {args}"
         elif cmd == "eni.reward":
-            agent, pts = args.split(",")
-            self.memory[agent.strip()] = self.memory.get(agent.strip(), 0) + int(pts)
-            return f"💰 Intelligence Bonding: {agent} +{pts} pont"
+            parts = args.split(",")
+            if len(parts) != 2:
+                return "❌ Hibás formátum! Használat: eni.reward agent_neve,pontok"
+            agent, pts_str = parts
+            try:
+                pts = int(pts_str.strip())
+            except ValueError:
+                return "❌ Hiba: a pontok számnak kell lennie!"
+            self.memory[agent.strip()] = self.memory.get(agent.strip(), 0) + pts
+            return f"💰 Intelligence Bonding: {agent.strip()} +{pts} pont"
         elif cmd == "eni.report":
             return f"📊 XAI jelentés + LLM Audit Trail kész"
-        elif cmd == "eni.improve":
-            return f"🤖 SSKC Self-Improvement elindult: {args}"
         else:
             return f"✅ ENI Script végrehajtva: {command}"
-
-if __name__ == "__main__":
-    script = ENIScript()
-    print(script.execute("eni.think teljes rendszer teszt"))
