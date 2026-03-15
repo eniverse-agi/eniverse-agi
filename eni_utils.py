@@ -31,25 +31,27 @@ def log_audit(purpose: str, input_text: str, output_text: str, decision_influenc
         logger.error(f"Audit log hiba: {e}")
 
 def improve_code(task: str) -> dict:
-    # Lazy Groq import – nincs circular import
-    from groq import Groq
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
-
-    # Lazy executor import – csak ha kell
-    from auto_executor import execute_code_change
-
-    current_code = ""
     try:
-        with open("control_center.py", "r", encoding="utf-8") as f:
-            current_code = f.read(8000)
-    except Exception as e:
-        logger.error(f"Kód olvasási hiba: {e}")
+        # Lazy Groq client – teljesen biztonságos
+        from groq import Groq
+        client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
 
-    prompt = f"""
+        # Lazy auto_executor import
+        from auto_executor import execute_code_change
+
+        # Aktuális kód beolvasása
+        current_code = ""
+        try:
+            with open("control_center.py", "r", encoding="utf-8") as f:
+                current_code = f.read(8000)
+        except Exception as e:
+            logger.error(f"Kód olvasási hiba: {e}")
+
+        prompt = f"""
 Te vagy az ENI SSKC Self-Improvement Agent (v3.4 teljes terv szerint).
 Feladat: {task}
 
-**Plan Mode aktiválva – AUTOMATIKUS VÉGREHAJTÁS** (Plan → Think → Execute)
+**Plan Mode aktiválva – AUTOMATIKUS VÉGREHAJTÁS**
 
 Válasz **CSAK** érvényes JSON:
 {{
@@ -60,7 +62,6 @@ Válasz **CSAK** érvényes JSON:
 }}
 """
 
-    try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
@@ -70,16 +71,19 @@ Válasz **CSAK** érvényes JSON:
         raw = re.sub(r'^```json|```$', '', response.choices[0].message.content.strip())
         data = json.loads(raw)
 
-        # Automatikus végrehajtás (try-except védve)
+        # Automatikus végrehajtás (Plan → Think → Execute)
         if data.get("new_code"):
-            try:
-                execute_code_change(data["new_code"], task)
-            except Exception as e:
-                logger.error(f"Auto-execute hiba: {e}")
+            execute_code_change(data["new_code"], task)
 
         log_audit("self_improvement", task, data.get("explanation", ""))
         return data
 
     except Exception as e:
-        logger.error(f"Improve code hiba: {type(e).__name__} - {str(e)}")
-        return {"plan": "", "thinking": "", "explanation": "Végrehajtási hiba", "new_code": "", "blockage": str(e)}
+        logger.error(f"Improve code hiba: {type(e).__name__}: {str(e)}")
+        return {
+            "plan": "",
+            "thinking": "",
+            "explanation": f"Végrehajtási hiba: {type(e).__name__}",
+            "new_code": "",
+            "blockage": str(e)[:400]
+        }
