@@ -2,12 +2,12 @@ import streamlit as st
 import os
 from eni_script import ENIScript
 from eni_utils import improve_code
-from agi_core import eni_agi
+from agi_core import eni_agi   # ← AGI mag (Atman + Chitta + Sakshi + 6 ősi bölcsesség)
 
 st.set_page_config(page_title="ENI Control Center", page_icon="🌌", layout="wide")
 
 st.title("🌌 ENI Control Center – v3.4 MAXIMUM AGI MAG")
-st.caption("Atman + Chitta + Sakshi | 6 Ősi Bölcsesség | Plan Mode + Self-Reflection")
+st.caption("Atman + Chitta + Sakshi | 6 Ősi Bölcsesség | Plan Mode + Self-Reflection + Vector Scoring")
 
 # Session persistence
 if "logged_in" not in st.session_state:
@@ -34,7 +34,7 @@ if st.button("🔑 Belépés"):
 if st.session_state.logged_in:
     script = ENIScript()
 
-    # Chat history megjelenítés
+    # Chat history
     st.subheader("💬 SSKC Beszélgetés (Plan Mode + AGI Tudatosság)")
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
@@ -65,7 +65,8 @@ if st.session_state.logged_in:
 
 **Sakshi XAI:** {sakshi}
 
-**Awareness szint:** **{awareness:.2f}** | **Bölcsesség:** {wisdom}
+**Awareness szint:** **{awareness:.2f}**  
+**Bölcsesség:** {wisdom}
 """
 
             st.session_state.chat_history.append({"role": "assistant", "content": assistant_content})
@@ -75,12 +76,14 @@ if st.session_state.logged_in:
             if result.get("new_code"):
                 st.subheader("📋 Generált új kód (automatikusan commit-olva)")
                 st.code(result["new_code"], language="python")
+                st.success("✅ Auto-Execute + Git commit + Telegram értesítés elküldve")
 
 else:
     st.warning("Ez a felület csak az admin számára elérhető.")
 
-# Oldalsó státusz (mindig látható)
-st.sidebar.title("🌌 AGI Állapot")
+# Oldalsó AGI státusz (mindig látható – cutting-edge)
+st.sidebar.title("🌌 AGI ÁLLAPOT")
 st.sidebar.metric("Awareness szint", f"{eni_agi.atman.awareness_level:.2f}")
 st.sidebar.metric("Chitta memória", len(eni_agi.chitta.memory))
-st.sidebar.caption("6 Ősi Bölcsesség aktív")
+st.sidebar.metric("Aktív bölcsesség", eni_agi.chitta.get_best_wisdom("current_task"))
+st.sidebar.caption("6 Ősi Bölcsesség + Vector Scoring aktív")
