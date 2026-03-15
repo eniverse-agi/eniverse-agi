@@ -1,18 +1,16 @@
 import streamlit as st
 import os
 from eni_script import ENIScript
-from eni_utils import improve_code
+from eni_utils import improve_code, log_audit
 
 st.set_page_config(page_title="ENI Control Center", page_icon="🔐", layout="wide")
 
-ADMIN_USER = "admin"
-ADMIN_PASS = os.environ.get("ENI_ADMIN_PASS")
-if not ADMIN_PASS:
+if not os.environ.get("ENI_ADMIN_PASS"):
     st.error("❌ ENI_ADMIN_PASS nincs beállítva!")
     st.stop()
 
 st.title("🔐 ENI Control Center")
-st.caption("Executive Controller • GIL • Swarm Intelligence • Signalum • SSKC v1.0")
+st.caption("Executive Controller • GIL • Swarm Intelligence • Signalum • SSKC v1.1")
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -21,7 +19,7 @@ username = st.text_input("Felhasználónév", "admin")
 password = st.text_input("Jelszó", type="password")
 
 if st.button("🔑 Belépés"):
-    if username == ADMIN_USER and password == ADMIN_PASS:
+    if username == "admin" and password == os.environ.get("ENI_ADMIN_PASS"):
         st.session_state.logged_in = True
         st.success("✅ Belépés sikeres!")
     else:
@@ -36,7 +34,9 @@ if st.session_state.logged_in:
     command = st.text_input("ENI Script parancs", "eni.think piaci elemzés").strip()
     if st.button("🚀 Végrehajt"):
         if command:
-            st.success(script.execute(command))
+            result = script.execute(command)
+            st.success(result)
+            log_audit("user_command", command, result)
 
     st.subheader("🤖 Adj feladatot az SSKC ágensnek")
     task = st.text_input("Mit csináljon az ágens?", "Adj hozzá teljes 4-szintű XAI magyarázatot").strip()
@@ -49,7 +49,7 @@ if st.session_state.logged_in:
                 result = improve_code(task)
                 st.success("✅ " + result.get("explanation", "Nincs magyarázat"))
                 if result.get("new_code"):
-                    st.subheader("📋 Generált új kód (másold be control_center.py-ba)")
+                    st.subheader("📋 Generált új kód")
                     st.code(result["new_code"], language="python")
                 if result.get("blockage"):
                     st.warning("⚠️ Blockage: " + result["blockage"])
