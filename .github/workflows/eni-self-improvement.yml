@@ -1,39 +1,12 @@
-name: ENI Self-Improvement Agent (SSKC Loop)
-
+name: ENI Auto Execute + Redeploy
 on:
-  schedule:
-    - cron: '0 3 * * *'
-  workflow_dispatch:
-
-# ←←← EZT A RÉSZT HOZZUK HOZZÁ (fontos!)
-permissions:
-  contents: write
-
+  push:
+    paths:
+      - 'control_center.py'
 jobs:
-  improve:
+  redeploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Futtatjuk az autonóm SSKC ágenst
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        run: python eni_self_improver.py > improvement.json
-
-      - name: Commit ha javítás történt
-        run: |
-          git config user.name "ENI SSKC Agent"
-          git config user.email "agent@eniverse.org"
-          git add .
-          git commit -m "🤖 SSKC: Autonóm fejlesztés" || echo "No changes"
-          git push
+      - name: Trigger Render Redeploy
+        run: curl -X POST -H "Authorization: Bearer ${{ secrets.RENDER_DEPLOY_HOOK }}" https://api.render.com/deploy/srv-...
