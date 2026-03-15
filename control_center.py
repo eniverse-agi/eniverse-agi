@@ -5,7 +5,6 @@ from eni_script import ENIScript
 
 st.set_page_config(page_title="ENI Control Center", page_icon="🔐", layout="wide")
 
-# === BIZTONSÁG ===
 ADMIN_USER = "admin"
 ADMIN_PASS = os.environ.get("ENI_ADMIN_PASS", "default123")
 
@@ -39,7 +38,7 @@ if st.session_state.logged_in:
     if st.button("🔴 Circuit Breaker ON"):
         st.error("⚠️ Minden folyamat leállítva!")
 
-    # === DINAMIKUS BLOCKAGE REPORT (az ágens magyarázata) ===
+    # DINAMIKUS BLOCKAGE REPORT
     st.subheader("📋 Mi történt ma / Blockage Report")
     if os.path.exists("improvement.json"):
         try:
@@ -48,10 +47,10 @@ if st.session_state.logged_in:
             st.success("✅ " + data.get("explanation", "Nincs magyarázat"))
             if data.get("blockage"):
                 st.warning("⚠️ Blockage: " + data["blockage"])
-        except:
-            st.info("Az ágens lefutott, de a JSON olvasása nem sikerült.")
+        except Exception as e:
+            st.error("JSON olvasási hiba: " + str(e))
     else:
-        st.info("Az autonóm SSKC ágens itt írja a magyarázatot...")
+        st.info("Az SSKC ágens még nem írt magyarázatot.")
 
     st.caption("Minden döntés naplózva az LLM Audit Trail-be.")
 else:
