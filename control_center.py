@@ -39,7 +39,7 @@ if st.session_state.logged_in:
     if st.button("🔴 Circuit Breaker ON"):
         st.error("⚠️ Minden folyamat leállítva!")
 
-    # === DINAMIKUS BLOCKAGE REPORT ===
+    # === DINAMIKUS BLOCKAGE REPORT (az ágens magyarázata) ===
     st.subheader("📋 Mi történt ma / Blockage Report")
     if os.path.exists("improvement.json"):
         try:
@@ -48,10 +48,10 @@ if st.session_state.logged_in:
             st.success("✅ " + data.get("explanation", "Nincs magyarázat"))
             if data.get("blockage"):
                 st.warning("⚠️ Blockage: " + data["blockage"])
-        except Exception as e:
+        except:
             st.info("Az ágens lefutott, de a JSON olvasása nem sikerült.")
     else:
-        st.info("Az autonóm SSKC ágens itt írja a magyarázatot, ha elakad vagy fejleszt. (Még nem történt változás.)")
+        st.info("Az autonóm SSKC ágens itt írja a magyarázatot...")
 
     st.caption("Minden döntés naplózva az LLM Audit Trail-be.")
 else:
