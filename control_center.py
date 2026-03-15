@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import json
 from eni_script import ENIScript
+from eni_self_improver import improve_code
 
 st.set_page_config(page_title="ENI Control Center", page_icon="🔐", layout="wide")
 
@@ -30,27 +31,24 @@ if st.session_state.logged_in:
     st.subheader("📊 Aktuális állapot")
     st.info("Signalum Risk Level: **R0** | Swarm: 7 ágens aktív | LLM Audit: élő")
 
+    # Normál ENI Script parancs
     command = st.text_input("ENI Script parancs", "eni.think piaci elemzés")
     if st.button("🚀 Végrehajt"):
         result = script.execute(command)
         st.success(result)
 
+    # === KÖZVETLEN FELADAT AZ ÁGENSNEK ===
+    st.subheader("🤖 Adj feladatot az SSKC ágensnek")
+    task = st.text_input("Mit csináljon az ágens?", "piaci elemzés + adj hozzá új funkciót")
+    if st.button("Küldd az ágensnek"):
+        with st.spinner("Az ágens dolgozik..."):
+            result = improve_code(task)
+            st.success("✅ " + result.get("explanation", "Nincs magyarázat"))
+            if result.get("blockage"):
+                st.warning("⚠️ Blockage: " + result["blockage"])
+
     if st.button("🔴 Circuit Breaker ON"):
         st.error("⚠️ Minden folyamat leállítva!")
-
-    # DINAMIKUS BLOCKAGE REPORT
-    st.subheader("📋 Mi történt ma / Blockage Report")
-    if os.path.exists("improvement.json"):
-        try:
-            with open("improvement.json", "r", encoding="utf-8") as f:
-                data = json.load(f)
-            st.success("✅ " + data.get("explanation", "Nincs magyarázat"))
-            if data.get("blockage"):
-                st.warning("⚠️ Blockage: " + data["blockage"])
-        except Exception as e:
-            st.error("JSON olvasási hiba: " + str(e))
-    else:
-        st.info("Az SSKC ágens még nem írt magyarázatot.")
 
     st.caption("Minden döntés naplózva az LLM Audit Trail-be.")
 else:
