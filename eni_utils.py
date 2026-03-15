@@ -4,72 +4,61 @@ import re
 import logging
 from groq import Groq
 
-# Logging beállítása
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
 logger = logging.getLogger(__name__)
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
 
-def read_code_snippet(filepath: str, max_chars: int = 6500) -> str:
+def read_code_snippet(filepath: str, max_chars: int = 7000) -> str:
     try:
         with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read(max_chars + 50)
-            return content[:max_chars]
-    except FileNotFoundError:
-        logger.error(f"{filepath} fájl nem található")
-        return "Nincs fájl."
-    except IOError as e:
-        logger.error(f"I/O hiba: {str(e)}")
-        return "Fájl olvasási hiba."
+            return f.read(max_chars)
     except Exception as e:
-        logger.error(f"Váratlan hiba: {str(e)}")
-        return "Hiba a fájl olvasása során."
+        logger.error(f"Fájl olvasási hiba: {e}")
+        return "Nincs fájl."
 
 def improve_code(task: str) -> dict:
-    try:
-        current_code = read_code_snippet("control_center.py")
-    except Exception as e:
-        logger.error(f"Kód beolvasás hiba: {str(e)}")
-        return {"explanation": "Hiba a kód beolvasása során", "blockage": str(e)}
+    current_code = read_code_snippet("control_center.py")
 
     prompt = f"""
 Te vagy az ENI SSKC Self-Improvement Agent (v3.4 spec szerint).
 Feladat: {task}
 
-Aktuális control_center.py:
+Aktuális control_center.py kód:
 {current_code}
 
-Válasz **CSAK** érvényes JSON formátumban, semmi más szöveg előtt vagy után!
+**KÖTELEZŐ**:
+- Generálj **teljes, futtatható** új kódot a control_center.py fájlhoz
+- A válasz **CSAK** érvényes JSON legyen, semmi más szöveg!
+- A JSON struktúra pontosan ez legyen:
+
 {{
-  "explanation": "magyarázat magyarul, mit csináltál",
-  "blockage": "ha elakadtál, magyarázd el magyarul mit kérsz az embertől (vagy üres string)"
+  "explanation": "részletes magyar magyarázat, mit változtattál és miért",
+  "new_code": "a TELJES új control_center.py tartalma itt",
+  "blockage": "ha nem tudtad megcsinálni, magyarázd el magyarul"
 }}
+
+Ne írj semmit a JSON-en kívül!
 """
 
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.5,
-            max_tokens=3000
+            temperature=0.3,
+            max_tokens=4096
         )
         raw = response.choices[0].message.content.strip()
     except Exception as e:
-        logger.error(f"LLM hiba: {str(e)}")
-        return {"explanation": "LLM hívási hiba", "blockage": str(e)}
+        return {"explanation": "LLM hívási hiba", "new_code": "", "blockage": str(e)}
 
-    # Robusztus JSON kinyerés
+    # Erős JSON tisztítás
     try:
         return json.loads(raw)
-    except json.JSONDecodeError:
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', raw)
+    except:
+        json_match = re.search(r'\{.*\}', raw, re.DOTALL)
         if json_match:
             try:
                 return json.loads(json_match.group(0))
-            except json.JSONDecodeError:
+            except:
                 pass
-        return {"explanation": "JSON parse hiba", "blockage": raw[:500]}
+        return {"explanation": "JSON parse hiba", "new_code": "", "blockage": raw[:400]}
