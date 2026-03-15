@@ -33,48 +33,51 @@ def log_audit(purpose: str, input_text: str, output_text: str, decision_influenc
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def improve_code(task: str) -> dict:
-    # Lazy Groq import (nincs circular import)
+    # Teljesen biztonságos lazy Groq client (nincs circular import)
     from groq import Groq
     client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
 
-    # Lazy auto_executor import
+    # Lazy executor import (csak ha kell)
     from auto_executor import execute_code_change
 
     current_code = ""
     try:
         with open("control_center.py", "r", encoding="utf-8") as f:
             current_code = f.read(8000)
-    except:
-        pass
+    except Exception as e:
+        logger.error(f"Kód olvasási hiba: {e}")
 
     prompt = f"""
-Te vagy az ENI SSKC Self-Improvement Agent (v3.4 spec szerint).
+Te vagy az ENI SSKC Self-Improvement Agent (v3.4 teljes terv szerint).
 Feladat: {task}
 
-Plan Mode aktiválva.
+Plan Mode aktiválva – AUTOMATIKUS VÉGREHAJTÁS.
 
-Válasz **CSAK** JSON:
+Válasz **CSAK** érvényes JSON:
 {{
-  "plan": "...",
-  "thinking": "...",
-  "explanation": "...",
+  "plan": "részletes terv",
+  "thinking": "lépésről lépésre gondolkodás",
+  "explanation": "végső magyarázat",
   "new_code": "TELJES új control_center.py tartalma"
 }}
 """
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-        max_tokens=4096
-    )
-    raw = re.sub(r'^```json|```$', '', response.choices[0].message.content.strip())
-
     try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=4096
+        )
+        raw = re.sub(r'^```json|```$', '', response.choices[0].message.content.strip())
         data = json.loads(raw)
+
         if data.get("new_code"):
-            execute_code_change(data["new_code"], task)
+            execute_code_change(data["new_code"], task)   # Automatikus commit + Telegram
+
         log_audit("self_improvement", task, data.get("explanation", ""))
         return data
+
     except Exception as e:
-        return {"plan": "", "thinking": "", "explanation": "JSON parse hiba", "new_code": "", "blockage": str(e)}
+        logger.error(f"Improve code hiba: {type(e).__name__} - {str(e)}")
+        return {"plan": "", "thinking": "", "explanation": "Végrehajtási hiba", "new_code": "", "blockage": str(e)}
