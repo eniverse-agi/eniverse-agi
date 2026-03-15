@@ -1,10 +1,11 @@
 import streamlit as st
 import os
+import json
 from eni_script import ENIScript
 
 st.set_page_config(page_title="ENI Control Center", page_icon="🔐", layout="wide")
 
-# === BIZTONSÁG – CSAK TE FÉRSZ HOZZÁ ===
+# === BIZTONSÁG ===
 ADMIN_USER = "admin"
 ADMIN_PASS = os.environ.get("ENI_ADMIN_PASS", "default123")
 
@@ -38,11 +39,21 @@ if st.session_state.logged_in:
 
     # Vész gomb
     if st.button("🔴 Circuit Breaker ON"):
-        st.error("⚠️ Minden folyamat leállítva! Safety Board értesítve.")
+        st.error("⚠️ Minden folyamat leállítva!")
 
-    # Blockage Report és magyarázat panel (az ágens ide írja ha elakad)
+    # === DINAMIKUS BLOCKAGE REPORT ===
     st.subheader("📋 Mi történt ma / Blockage Report")
-    st.info("Az autonóm SSKC ágens itt írja a magyarázatot, ha elakad vagy fejleszt.")
+    if os.path.exists("improvement.json"):
+        try:
+            with open("improvement.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+            st.success(data.get("explanation", "Nincs magyarázat"))
+            if data.get("blockage"):
+                st.warning("⚠️ Blockage: " + data["blockage"])
+        except:
+            st.info("Az ágens lefutott, de a JSON olvasása nem sikerült.")
+    else:
+        st.info("Az autonóm SSKC ágens itt írja a magyarázatot, ha elakad vagy fejleszt. (Még nem történt változás.)")
 
     st.caption("Minden döntés naplózva az LLM Audit Trail-be.")
 else:
