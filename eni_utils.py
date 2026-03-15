@@ -20,13 +20,13 @@ def improve_code(task: str) -> dict:
     current_code = read_code_snippet("control_center.py")
 
     prompt = f"""
-Te vagy az ENI SSKC Self-Improvement Agent.
+Te vagy az ENI SSKC Self-Improvement Agent (v3.4 spec szerint).
 Feladat: {task}
 
 Aktuális control_center.py:
 {current_code}
 
-**SZIGORÚ SZABÁLY:**
+**SZIGORÚ SZABÁLYOK:**
 - A válasz **CSAK** és **kizárólag** érvényes JSON legyen!
 - Semmi ```json, semmi magyarázat előtte vagy utána!
 - Pontosan ez a struktúra:
@@ -51,13 +51,12 @@ Kezdd közvetlenül a {{ jellel és fejezd be a }} jellel. Ne írj semmit mást!
     except Exception as e:
         return {"explanation": "LLM hiba", "new_code": "", "blockage": str(e)}
 
-    # Nagyon erős JSON tisztítás
+    # Legerősebb JSON tisztítás
     raw = raw.strip()
-    if raw.startswith("```json"):
-        raw = raw[7:]
+    if raw.startswith("```json") or raw.startswith("```"):
+        raw = raw.split("```", 2)[-1].strip()
     if raw.endswith("```"):
-        raw = raw[:-3]
-    raw = raw.strip()
+        raw = raw[:-3].strip()
 
     try:
         return json.loads(raw)
