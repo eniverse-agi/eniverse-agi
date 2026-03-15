@@ -1,4 +1,4 @@
 {
-  "explanation": "Piaci elemzést végeztem, és hozzáadtam egy új funkciót a rendszerhez. A piaci elemzés során az ágensek által gyűjtött adatok alapján elemeztem a piaci trendeket és azok hatását a vállalatra. Az új funkció egy olyan modul, amely lehetővé teszi a felhasználók számára, hogy egyéni jelentéseket kérjenek a piaci elemzés eredményeiről.",
-  "blockage": ""
+  "explanation": "A piaci elemzés funkcióval kapcsolatban a rendszer jelenleg képes végrehajtani az ENI Script parancsokat, beleértve a piaci elemzést is. Az új funkció hozzáadásához, például egy részletes piaci jelentés generálásához, a rendszernek további fejlesztésekre lenne szüksége. A fejlesztéshez szükséges lépések közé tartozna a piaci adatok gyűjtése, a jelentés sablonjának létrehozása és a generálás logikájának implementálása.",
+  "blockage": "A fejlesztéshez szükséges információk közé tartozik a piaci adatok forrása, a jelentés sablonjának specifikációja és a generálás logikájának részletei. Emellett szükség lenne a rendszer architektúrájának és a fejlesztéshez szükséges erőforrásoknak a meghatározására is."
 }
