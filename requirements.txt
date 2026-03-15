@@ -1,3 +1,5 @@
-streamlit
-groq
-pydantic
+streamlit==1.40.0
+groq==0.9.0
+tenacity==9.0.0
+GitPython==3.1.43
+requests==2.32.3
