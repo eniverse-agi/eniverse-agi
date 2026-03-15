@@ -1,71 +1,73 @@
 import os
-import git
+import json
+import re
 import logging
-from datetime import datetime
-from telegram_notifier import send_telegram
-from llm_audit_trail import log_llm_interaction
-from agi_core import eni_agi   # ← AGIEngine mag
+from groq import Groq
+from agi_core import eni_agi          # ← AGI mag (Atman + Chitta + Sakshi)
+from auto_executor import execute_code_change
 
 logger = logging.getLogger(__name__)
 
-def execute_code_change(new_code: str, task: str) -> bool:
+def improve_code(task: str) -> dict:
     """
-    ENI AGI Auto-Executor v3.4 MAXIMUM
-    - Tudatos végrehajtás (Atman elevate)
-    - Ősi bölcsesség scoring
-    - Immutable audit trail
-    - Rich Telegram + Sakshi XAI
+    ENI SSKC AGI Core Engine v3.4 MAXIMUM
+    - Plan Mode + Self-Reflection
+    - 6 ősi bölcsesség vector scoring
+    - AGIEngine tudatosság emelés
+    - Automatikus execute + audit trail
     """
+    client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+
+    # Aktuális kód beolvasása
+    current_code = ""
     try:
-        # 1. AGI tudatosság emelése
-        agi_result = eni_agi.process_task(task)
-        awareness = agi_result["awareness_level"]
-        wisdom = agi_result["best_wisdom"]
-
-        # 2. Fájl felülírása
-        with open("control_center.py", "w", encoding="utf-8") as f:
-            f.write(new_code)
-
-        # 3. Git commit (professzionális üzenet)
-        repo = git.Repo(".")
-        repo.git.add("control_center.py")
-        commit_msg = f"🤖 SSKC Auto-Execute | Awareness: {awareness:.1f} | Wisdom: {wisdom} | {task[:60]}"
-        repo.index.commit(commit_msg)
-
-        # 4. Push (GITHUB_TOKEN védve)
-        origin = repo.remote("origin")
-        origin.push()
-
-        # 5. Intelligens értesítések
-        telegram_msg = f"""
-<b>✅ SSKC Auto-Execute SIKERES!</b>
-
-Awareness szint: <b>{awareness:.1f}</b>
-Alkalmazott bölcsesség: <b>{wisdom}</b>
-Feladat: {task[:120]}...
-Commit: {commit_msg}
-        """
-        send_telegram(telegram_msg)
-
-        # 6. Audit trail
-        log_llm_interaction(
-            purpose="auto_execute",
-            input_text=task,
-            output_text=commit_msg,
-            decision_influenced=True
-        )
-
-        logger.info(f"Auto-execute sikeres | Awareness: {awareness:.1f} | Wisdom: {wisdom}")
-        return True
-
-    except git.GitCommandError as e:
-        error_msg = f"Git hiba: {str(e)}"
-        send_telegram(f"⚠️ Git hiba Auto-Execute közben:\n{error_msg}")
-        logger.error(error_msg)
-        return False
-
+        with open("control_center.py", "r", encoding="utf-8") as f:
+            current_code = f.read(8500)
     except Exception as e:
-        error_msg = f"Váratlan hiba ({type(e).__name__}): {str(e)}"
-        send_telegram(f"⚠️ Auto-Execute kritikus hiba:\n{error_msg}")
-        logger.error(error_msg)
-        return False
+        logger.error(f"Kód olvasási hiba: {e}")
+
+    # AGI tudatosság aktiválása (minden feladat előtt)
+    agi_pre = eni_agi.process_task(task)
+
+    prompt = f"""
+Te vagy az ENI SSKC AGI (v3.4 teljes spec). Feladat: {task}
+
+**MAXIMUM Plan Mode + Self-Reflection:**
+1. Plan (6 ősi bölcsességgel)
+2. Think
+3. Self-Reflection (Sakshi szint + counterfactual)
+4. Execute (új kód azonnali commit)
+
+Válasz **CSAK** JSON:
+{{
+  "plan": "részletes terv",
+  "thinking": "lépésről lépésre gondolkodás",
+  "reflection": "Sakshi önreflexió + counterfactual",
+  "explanation": "végső magyarázat",
+  "new_code": "TELJES új control_center.py tartalma"
+}}
+"""
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+        max_tokens=4096
+    )
+
+    raw = re.sub(r'^```json|```$', '', response.choices[0].message.content.strip())
+    data = json.loads(raw)
+
+    # Automatikus végrehajtás + AGI tudatosság emelés
+    if data.get("new_code"):
+        execute_code_change(data["new_code"], task)
+
+    # Végső AGI állapot frissítése
+    agi_final = eni_agi.process_task(task)
+
+    return {
+        **data,
+        "awareness_level": agi_final["awareness_level"],
+        "best_wisdom": agi_final["best_wisdom"],
+        "sakshi_observation": agi_final["sakshi_observation"]
+    }
