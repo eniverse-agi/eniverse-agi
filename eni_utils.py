@@ -3,7 +3,6 @@ import json
 import re
 import logging
 from datetime import datetime
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -31,13 +30,12 @@ def log_audit(purpose: str, input_text: str, output_text: str, decision_influenc
     except Exception as e:
         logger.error(f"Audit log hiba: {e}")
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def improve_code(task: str) -> dict:
-    # Teljesen biztonságos lazy Groq client (nincs circular import)
+    # Lazy Groq import – nincs circular import
     from groq import Groq
     client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
 
-    # Lazy executor import (csak ha kell)
+    # Lazy executor import – csak ha kell
     from auto_executor import execute_code_change
 
     current_code = ""
@@ -51,11 +49,11 @@ def improve_code(task: str) -> dict:
 Te vagy az ENI SSKC Self-Improvement Agent (v3.4 teljes terv szerint).
 Feladat: {task}
 
-Plan Mode aktiválva – AUTOMATIKUS VÉGREHAJTÁS.
+**Plan Mode aktiválva – AUTOMATIKUS VÉGREHAJTÁS** (Plan → Think → Execute)
 
 Válasz **CSAK** érvényes JSON:
 {{
-  "plan": "részletes terv",
+  "plan": "részletes terv magyarul",
   "thinking": "lépésről lépésre gondolkodás",
   "explanation": "végső magyarázat",
   "new_code": "TELJES új control_center.py tartalma"
@@ -72,8 +70,12 @@ Válasz **CSAK** érvényes JSON:
         raw = re.sub(r'^```json|```$', '', response.choices[0].message.content.strip())
         data = json.loads(raw)
 
+        # Automatikus végrehajtás (try-except védve)
         if data.get("new_code"):
-            execute_code_change(data["new_code"], task)   # Automatikus commit + Telegram
+            try:
+                execute_code_change(data["new_code"], task)
+            except Exception as e:
+                logger.error(f"Auto-execute hiba: {e}")
 
         log_audit("self_improvement", task, data.get("explanation", ""))
         return data
