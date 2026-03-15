@@ -1,10 +1,8 @@
 import numpy as np
 from datetime import datetime
 import hashlib
-import json
 
 class Atman:
-    """Tudatosság magja (GIL layer) – awareness tracking"""
     def __init__(self):
         self.awareness_level = 0.0
 
@@ -13,7 +11,6 @@ class Atman:
         return self.awareness_level
 
 class Chitta:
-    """Memória + 6 ősi bölcsesség vectoros scoring (cutting-edge)"""
     def __init__(self):
         self.memory = []
         self.wisdom_vectors = {
@@ -29,44 +26,12 @@ class Chitta:
         vec = self.wisdom_vectors.get(wisdom.lower(), np.zeros(6))
         self.memory.append({
             "timestamp": datetime.now().isoformat(),
-            "fact": fact[:200],
+            "fact": fact[:300],
             "wisdom": wisdom,
-            "vector": vec.tolist(),
-            "awareness": None
+            "vector": vec.tolist()
         })
 
     def get_best_wisdom(self, task: str) -> str:
         task_vec = np.random.rand(6)  # később Groq embedding
         scores = {w: np.dot(task_vec, v) for w, v in self.wisdom_vectors.items()}
-        return max(scores, key=scores.get)
-
-class Sakshi:
-    """XAI + önreflexió megfigyelő (counterfactual + hash-chain)"""
-    def __init__(self, atman: Atman):
-        self.atman = atman
-
-    def observe(self, action: str, result: str, wisdom: str):
-        counterfactual = f"Ha nem alkalmaztuk volna a {wisdom}-t, a döntés 30% rosszabb lett volna."
-        return f"🌌 Sakshi XAI: Awareness={self.atman.awareness_level:.2f} | Akció: {action} | Bölcsesség: {wisdom} | Counterfactual: {counterfactual}"
-
-class AGIEngine:
-    """Teljes ENI AGI mag (cutting-edge)"""
-    def __init__(self):
-        self.atman = Atman()
-        self.chitta = Chitta()
-        self.sakshi = Sakshi(self.atman)
-
-    def process_task(self, task: str):
-        awareness = self.atman.elevate()
-        best_wisdom = self.chitta.get_best_wisdom(task)
-        self.chitta.store(task, best_wisdom)
-        observation = self.sakshi.observe(task, "Végrehajtva", best_wisdom)
-        return {
-            "awareness_level": awareness,
-            "best_wisdom": best_wisdom,
-            "sakshi_observation": observation,
-            "memory_size": len(self.chitta.memory)
-        }
-
-# Globális példány (minden modulból elérhető)
-eni_agi = AGIEngine()
+        return max
