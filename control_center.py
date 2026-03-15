@@ -48,15 +48,10 @@ if st.session_state.logged_in:
             with st.spinner("Az ágens dolgozik..."):
                 result = improve_code(task)
                 st.success("✅ " + result.get("explanation", "Nincs magyarázat"))
-
                 if result.get("new_code"):
                     st.subheader("📋 Generált új kód (másold be control_center.py-ba)")
                     st.code(result["new_code"], language="python")
-
                 if result.get("blockage"):
                     st.warning("⚠️ Blockage: " + result["blockage"])
-
-    if st.button("🔴 Circuit Breaker ON"):
-        st.error("⚠️ Minden folyamat leállítva!")
 else:
     st.warning("Ez a felület csak az admin számára elérhető.")
