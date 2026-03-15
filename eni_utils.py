@@ -36,12 +36,12 @@ def log_audit(purpose: str, input_text: str, output_text: str, decision_influenc
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def improve_code(task: str) -> dict:
+    current_code = ""
     try:
         with open("control_center.py", "r", encoding="utf-8") as f:
-            current_code = f.read(7500)
-    except Exception as e:
-        logger.error(f"Kód olvasási hiba: {e}")
-        return {"explanation": "Fájl olvasási hiba", "new_code": "", "blockage": str(e)}
+            current_code = f.read(8000)
+    except:
+        pass
 
     prompt = f"""
 Te vagy az ENI SSKC Self-Improvement Agent (v3.4 spec szerint).
@@ -50,33 +50,33 @@ Feladat: {task}
 Aktuális control_center.py:
 {current_code}
 
-**KÖTELEZŐ FORMÁTUM:**
-- Válasz **CSAK** tiszta JSON legyen, semmi más!
-- Struktúra:
+**Plan Mode – lépésről lépésre:**
+1. **Plan**: tervezd meg a megoldást
+2. **Think**: gondolkozz lépésről lépésre
+3. **Execute**: hajtsd végre automatikusan (generálj teljes kódot)
+
+Válasz **CSAK** érvényes JSON formátumban, semmi más szöveg előtt vagy után!
 {{
-  "explanation": "részletes magyar magyarázat",
+  "plan": "részletes terv magyarul",
+  "thinking": "lépésről lépésre gondolkodás",
+  "explanation": "végső magyarázat",
   "new_code": "TELJES új control_center.py tartalma (másolható)",
   "blockage": "ha elakadtál, magyarázd el magyarul vagy üres string"
 }}
 """
 
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.1,
-            max_tokens=4096
-        )
-        raw = response.choices[0].message.content.strip()
-    except Exception as e:
-        logger.error(f"Groq hiba: {e}")
-        return {"explanation": "LLM hívási hiba", "new_code": "", "blockage": str(e)}
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+        max_tokens=4096
+    )
+    raw = response.choices[0].message.content.strip()
 
-    # Erős JSON tisztítás
     raw = re.sub(r'^```json|```$', '', raw).strip()
     try:
         data = json.loads(raw)
         log_audit("self_improvement", task, data.get("explanation", ""))
         return data
     except:
-        return {"explanation": "JSON parse hiba", "new_code": "", "blockage": raw[:500]}
+        return {"plan": "", "thinking": "", "explanation": "JSON parse hiba", "new_code": "", "blockage": raw[:600]}
