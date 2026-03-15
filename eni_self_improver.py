@@ -50,3 +50,4 @@ JSON struktúra:
 if __name__ == "__main__":
     result = improve_code("Adjunk hozzá jobb Blockage Report panelt és magyarázatot, ha elakadok")
     print(json.dumps(result, ensure_ascii=False, indent=2))
+    
