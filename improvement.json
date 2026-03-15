@@ -1,0 +1,6 @@
+{
+  "file": "control_center.py",
+  "code": "",
+  "explanation": "JSON hiba",
+  "blockage": "```json\n{\n  \"file\": \"control_center.py\",\n  \"code\": \"\nimport streamlit as st\nimport os\nfrom eni_script import ENIScript\n\nst.set_page_config(page_title=\\\"ENI Control Center\\\", page_icon=\\\"🔐\\\", layout=\\\"wide\\\")\n\n# === BIZTONSÁG – CSAK TE FÉRSZ HOZZÁ ===\nADMIN_USER = \\\"admin\\\"\nADMIN_PASS = os.environ.get(\\\"ENI_ADMIN_PASS\\\", \\\"default123\\\")\n\nst.title(\\\"🔐 ENI Control Center\\\")\nst.caption(\\\"Executive Controller • GIL • Swarm Intelligence • Signalum • SSKC\\\")\n\nif \\\"logged_in\\\" not in st.session_state:\n "
+}
