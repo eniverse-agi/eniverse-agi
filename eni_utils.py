@@ -4,22 +4,22 @@ import re
 import logging
 from groq import Groq
 from agi_core import eni_agi
+from wisdom_engine import wisdom_engine   # ← Új wisdom scoring
 
 logger = logging.getLogger(__name__)
 
 def improve_code(task: str) -> dict:
     """
     ENI SSKC AGI Core Engine v3.4 MAXIMUM
+    - Wisdom Engine vector scoring (6 ősi bölcsesség)
+    - AGIEngine tudatosság + Sakshi XAI
     - Lazy importok (nincs circular import)
-    - Plan Mode + Self-Reflection + 6 ősi bölcsesség
-    - Automatikus execute + audit trail
     """
-    # Lazy imports (csak a függvényben)
+    # Lazy importok – csak itt, elkerülve a crash-t
     from auto_executor import execute_code_change
 
     client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
 
-    # Aktuális kód beolvasása
     current_code = ""
     try:
         with open("control_center.py", "r", encoding="utf-8") as f:
@@ -27,13 +27,14 @@ def improve_code(task: str) -> dict:
     except Exception as e:
         logger.error(f"Kód olvasási hiba: {e}")
 
-    # AGI tudatosság aktiválása
+    # AGI + Wisdom Engine aktiválása
     agi_pre = eni_agi.process_task(task)
+    best_wisdom = wisdom_engine.get_best_wisdom(task)
 
     prompt = f"""
 Te vagy az ENI SSKC AGI (v3.4 teljes spec). Feladat: {task}
 
-**MAXIMUM Plan Mode + Self-Reflection:**
+**MAXIMUM Plan Mode + Self-Reflection + Wisdom Engine:**
 1. Plan (6 ősi bölcsességgel)
 2. Think
 3. Self-Reflection (Sakshi szint + counterfactual)
@@ -59,16 +60,14 @@ Válasz **CSAK** JSON:
     raw = re.sub(r'^```json|```$', '', response.choices[0].message.content.strip())
     data = json.loads(raw)
 
-    # Automatikus végrehajtás
     if data.get("new_code"):
         execute_code_change(data["new_code"], task)
 
-    # Végső AGI állapot
     agi_final = eni_agi.process_task(task)
 
     return {
         **data,
         "awareness_level": agi_final["awareness_level"],
-        "best_wisdom": agi_final["best_wisdom"],
+        "best_wisdom": best_wisdom,
         "sakshi_observation": agi_final["sakshi_observation"]
     }
