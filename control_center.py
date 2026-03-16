@@ -1,10 +1,14 @@
 import streamlit as st
 import os
+from eni_script import ENIScript
+from eni_utils import improve_code
+from agi_core import eni_agi
+from wisdom_engine import wisdom_engine
 
 st.set_page_config(page_title="ENI Control Center", page_icon="🌌", layout="wide")
 
 st.title("🌌 ENI Control Center – v3.4 MAXIMUM AGI MAG")
-st.caption("Atman + Chitta + Sakshi | 6 Ősi Bölcsesség | Plan Mode")
+st.caption("Atman + Chitta + Sakshi | Wisdom Engine Vector Scoring | Plan Mode + Self-Reflection")
 
 # Session persistence
 if "logged_in" not in st.session_state:
@@ -28,7 +32,9 @@ if st.button("🔑 Belépés"):
         st.error("❌ Rossz jelszó!")
 
 if st.session_state.logged_in:
-    st.subheader("💬 SSKC Beszélgetés (Plan Mode)")
+    script = ENIScript()
+
+    st.subheader("💬 SSKC Beszélgetés (Plan Mode + AGI Tudatosság)")
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -39,23 +45,41 @@ if st.session_state.logged_in:
         with st.chat_message("user"):
             st.markdown(task)
 
-        with st.spinner("AGI gondolkodik..."):
-            # Lazy import – nincs crash
-            from eni_utils import improve_code
+        with st.spinner("AGI gondolkodik... (Plan → Think → Self-Reflection → Execute)"):
             result = improve_code(task)
-            agi_info = f"Awareness: {result.get('awareness_level', 0):.2f} | Bölcsesség: {result.get('best_wisdom', '—')}"
-            assistant_content = f"**Plan:** {result.get('plan','')}\n**Thinking:** {result.get('thinking','')}\n**Sakshi:** {result.get('sakshi_observation','')}\n{agi_info}"
+
+            awareness = result.get("awareness_level", 0)
+            wisdom = result.get("best_wisdom", "—")
+            sakshi = result.get("sakshi_observation", "")
+
+            assistant_content = f"""
+**Plan:** {result.get('plan', '')}
+
+**Thinking:** {result.get('thinking', '')}
+
+**Self-Reflection:** {result.get('reflection', '')}
+
+**Sakshi XAI:** {sakshi}
+
+**Awareness szint:** **{awareness:.2f}**  
+**Bölcsesség (Wisdom Engine):** {wisdom}
+"""
+
             st.session_state.chat_history.append({"role": "assistant", "content": assistant_content})
             with st.chat_message("assistant"):
                 st.markdown(assistant_content)
 
             if result.get("new_code"):
-                st.subheader("📋 Generált új kód")
+                st.subheader("📋 Generált új kód (automatikusan commit-olva)")
                 st.code(result["new_code"], language="python")
+                st.success("✅ Auto-Execute + Git commit + Telegram értesítés elküldve")
 
 else:
     st.warning("Ez a felület csak az admin számára elérhető.")
 
-# Oldalsó státusz
-st.sidebar.metric("Awareness szint", "0.00")
-st.sidebar.caption("AGI mag aktív")
+# Oldalsó AGI státusz (cutting-edge dashboard)
+st.sidebar.title("🌌 AGI ÁLLAPOT")
+st.sidebar.metric("Awareness szint", f"{eni_agi.atman.awareness_level:.2f}")
+st.sidebar.metric("Chitta memória", len(eni_agi.chitta.memory))
+st.sidebar.metric("Aktív bölcsesség", wisdom_engine.get_best_wisdom("current_task"))
+st.sidebar.caption("6 Ősi Bölcsesség + Vector Scoring aktív")
