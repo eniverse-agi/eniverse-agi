@@ -1,71 +1,61 @@
+import streamlit as st
 import os
-import json
-import re
-import logging
-from groq import Groq
-from agi_core import eni_agi   # AGI mag (Atman + Chitta + Sakshi)
 
-logger = logging.getLogger(__name__)
+st.set_page_config(page_title="ENI Control Center", page_icon="🌌", layout="wide")
 
-def improve_code(task: str) -> dict:
-    """
-    ENI SSKC AGI Core Engine v3.4 MAXIMUM
-    - Lazy import (nincs circular import)
-    - Plan Mode + Self-Reflection + 6 ősi bölcsesség
-    - Automatikus execute + audit trail
-    """
-    # Lazy import (csak a függvényben)
-    from auto_executor import execute_code_change
+st.title("🌌 ENI Control Center – v3.4 MAXIMUM AGI MAG")
+st.caption("Atman + Chitta + Sakshi | 6 Ősi Bölcsesség | Plan Mode")
 
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+# Session persistence
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-    current_code = ""
-    try:
-        with open("control_center.py", "r", encoding="utf-8") as f:
-            current_code = f.read(8500)
-    except Exception as e:
-        logger.error(f"Kód olvasási hiba: {e}")
+ADMIN_PASS = os.environ.get("ENI_ADMIN_PASS")
+if not ADMIN_PASS:
+    st.error("❌ ENI_ADMIN_PASS nincs beállítva!")
+    st.stop()
 
-    # AGI tudatosság aktiválása
-    agi_pre = eni_agi.process_task(task)
+username = st.text_input("Felhasználónév", "admin")
+password = st.text_input("Jelszó", type="password")
 
-    prompt = f"""
-Te vagy az ENI SSKC AGI (v3.4 teljes spec). Feladat: {task}
+if st.button("🔑 Belépés"):
+    if username == "admin" and password == ADMIN_PASS:
+        st.session_state.logged_in = True
+        st.success("✅ Belépés sikeres – session megőrzve")
+    else:
+        st.error("❌ Rossz jelszó!")
 
-**MAXIMUM Plan Mode + Self-Reflection:**
-1. Plan (6 ősi bölcsességgel)
-2. Think
-3. Self-Reflection (Sakshi szint + counterfactual)
-4. Execute (új kód azonnali commit)
+if st.session_state.logged_in:
+    st.subheader("💬 SSKC Beszélgetés (Plan Mode)")
+    for msg in st.session_state.chat_history:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-Válasz **CSAK** JSON:
-{{
-  "plan": "részletes terv",
-  "thinking": "lépésről lépésre gondolkodás",
-  "reflection": "Sakshi önreflexió + counterfactual",
-  "explanation": "végső magyarázat",
-  "new_code": "TELJES új control_center.py tartalma"
-}}
-"""
+    task = st.chat_input("Írd be a feladatot – AGI Plan Mode aktiválva")
+    if task:
+        st.session_state.chat_history.append({"role": "user", "content": task})
+        with st.chat_message("user"):
+            st.markdown(task)
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-        max_tokens=4096
-    )
+        with st.spinner("AGI gondolkodik..."):
+            # Lazy import – nincs crash
+            from eni_utils import improve_code
+            result = improve_code(task)
+            agi_info = f"Awareness: {result.get('awareness_level', 0):.2f} | Bölcsesség: {result.get('best_wisdom', '—')}"
+            assistant_content = f"**Plan:** {result.get('plan','')}\n**Thinking:** {result.get('thinking','')}\n**Sakshi:** {result.get('sakshi_observation','')}\n{agi_info}"
+            st.session_state.chat_history.append({"role": "assistant", "content": assistant_content})
+            with st.chat_message("assistant"):
+                st.markdown(assistant_content)
 
-    raw = re.sub(r'^```json|```$', '', response.choices[0].message.content.strip())
-    data = json.loads(raw)
+            if result.get("new_code"):
+                st.subheader("📋 Generált új kód")
+                st.code(result["new_code"], language="python")
 
-    if data.get("new_code"):
-        execute_code_change(data["new_code"], task)
+else:
+    st.warning("Ez a felület csak az admin számára elérhető.")
 
-    agi_final = eni_agi.process_task(task)
-
-    return {
-        **data,
-        "awareness_level": agi_final["awareness_level"],
-        "best_wisdom": agi_final["best_wisdom"],
-        "sakshi_observation": agi_final["sakshi_observation"]
-    }
+# Oldalsó státusz
+st.sidebar.metric("Awareness szint", "0.00")
+st.sidebar.caption("AGI mag aktív")
