@@ -7,6 +7,8 @@ on:
       - 'eni_utils.py'
       - 'auto_executor.py'
       - 'agi_core.py'
+      - 'wisdom_engine.py'
+      - 'telegram_notifier.py'
     branches:
       - main
 
@@ -27,17 +29,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Trigger Render Redeploy (auto)
+      - name: Trigger Render Redeploy
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
           if [ -n "$RENDER_DEPLOY_HOOK" ]; then
             curl -X POST -H "Authorization: Bearer $RENDER_DEPLOY_HOOK" https://api.render.com/deploy/srv-...
+            echo "Render redeploy trigger elküldve"
           else
-            echo "Render redeploy hook nincs beállítva – manuális redeploy szükséges"
+            echo "RENDER_DEPLOY_HOOK nincs beállítva – manuális redeploy szükséges"
           fi
 
-      - name: Send Telegram summary
-        run: |
-          echo "✅ GitHub Actions: Auto-Execute sikeres! Commit: ${{ github.event.head_commit.message }}"
-          # Telegram értesítés (opcionális, később bővíthető)
+      - name: Log success
+        run: echo "✅ ENI Auto-Execute workflow lefutott – commit: ${{ github.event.head_commit.message }}"
