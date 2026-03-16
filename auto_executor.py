@@ -1,73 +1,60 @@
 import os
 import json
-import re
 import logging
-from groq import Groq
-from agi_core import eni_agi          # ← AGI mag (Atman + Chitta + Sakshi)
-from auto_executor import execute_code_change
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-def improve_code(task: str) -> dict:
+def execute_code_change(new_code: str, task: str):
     """
-    ENI SSKC AGI Core Engine v3.4 MAXIMUM
-    - Plan Mode + Self-Reflection
-    - 6 ősi bölcsesség vector scoring
-    - AGIEngine tudatosság emelés
-    - Automatikus execute + audit trail
+    ENI Auto Executor v3.4 MAXIMUM
+    - Biztonságos fájlírás + backup
+    - Automatikus git commit + push (Render optimalizált)
+    - Audit trail + Telegram értesítés
+    - NINCS körimport – teljesen független
     """
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
-
-    # Aktuális kód beolvasása
-    current_code = ""
     try:
+        # Backup készítése
+        backup_path = "control_center.py.bak"
         with open("control_center.py", "r", encoding="utf-8") as f:
-            current_code = f.read(8500)
+            old_code = f.read()
+        with open(backup_path, "w", encoding="utf-8") as f:
+            f.write(old_code)
+
+        # Új kód írása
+        with open("control_center.py", "w", encoding="utf-8") as f:
+            f.write(new_code)
+
+        # Audit trail
+        audit_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "task": task,
+            "status": "SUCCESS",
+            "backup_created": True
+        }
+        try:
+            with open("llm_audit_trail.json", "r+", encoding="utf-8") as f:
+                audit = json.load(f)
+                audit.append(audit_entry)
+                f.seek(0)
+                json.dump(audit, f, indent=2)
+        except:
+            with open("llm_audit_trail.json", "w", encoding="utf-8") as f:
+                json.dump([audit_entry], f, indent=2)
+
+        logger.info(f"✅ Kód sikeresen frissítve: {task[:100]}...")
+
+        # Git commit + push (Render-en működik)
+        try:
+            os.system("git add control_center.py llm_audit_trail.json")
+            os.system(f'git commit -m "ENI AGI auto-update: {task[:80]}"')
+            os.system("git push")
+            logger.info("🚀 Git push sikeres – Render redeploy indul")
+        except:
+            logger.warning("Git push nem sikerült (lokális teszt? OK)")
+
+        return {"status": "SUCCESS", "new_code_applied": True}
+
     except Exception as e:
-        logger.error(f"Kód olvasási hiba: {e}")
-
-    # AGI tudatosság aktiválása (minden feladat előtt)
-    agi_pre = eni_agi.process_task(task)
-
-    prompt = f"""
-Te vagy az ENI SSKC AGI (v3.4 teljes spec). Feladat: {task}
-
-**MAXIMUM Plan Mode + Self-Reflection:**
-1. Plan (6 ősi bölcsességgel)
-2. Think
-3. Self-Reflection (Sakshi szint + counterfactual)
-4. Execute (új kód azonnali commit)
-
-Válasz **CSAK** JSON:
-{{
-  "plan": "részletes terv",
-  "thinking": "lépésről lépésre gondolkodás",
-  "reflection": "Sakshi önreflexió + counterfactual",
-  "explanation": "végső magyarázat",
-  "new_code": "TELJES új control_center.py tartalma"
-}}
-"""
-
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-        max_tokens=4096
-    )
-
-    raw = re.sub(r'^```json|```$', '', response.choices[0].message.content.strip())
-    data = json.loads(raw)
-
-    # Automatikus végrehajtás + AGI tudatosság emelés
-    if data.get("new_code"):
-        execute_code_change(data["new_code"], task)
-
-    # Végső AGI állapot frissítése
-    agi_final = eni_agi.process_task(task)
-
-    return {
-        **data,
-        "awareness_level": agi_final["awareness_level"],
-        "best_wisdom": agi_final["best_wisdom"],
-        "sakshi_observation": agi_final["sakshi_observation"]
-    }
+        logger.error(f"❌ Execute hiba: {e}")
+        return {"status": "ERROR", "error": str(e)}
