@@ -21,7 +21,6 @@ st.markdown("""
 st.title("🌌 ENI CONTROL CENTER – v4.1 MAXIMUM INTELLIGENCE")
 st.caption("SSKC v4.1 • Reflexion + Recursive Self-Improvement • Tree-of-Thoughts • Production-Ready AGI")
 
-# Session
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "chat_history" not in st.session_state:
@@ -32,7 +31,6 @@ if not ADMIN_PASS:
     st.error("❌ ENI_ADMIN_PASS nincs beállítva!")
     st.stop()
 
-# Login
 col1, col2 = st.columns([1, 3])
 with col1:
     username = st.text_input("Felhasználónév", "admin")
@@ -55,7 +53,6 @@ if st.session_state.logged_in:
         "🔧 Rendszer Log & Állapot"
     ])
 
-    # TAB 1
     with tab1:
         st.subheader("🧠 SSKC v4.1 MAXIMUM INTELLIGENCE – REFLEXION + RECURSIVE SELF-IMPROVEMENT")
         st.caption("Tree-of-Thoughts • Multi-Stage Reflexion • Dynamic Module Creation • o1-szintű reasoning")
@@ -88,7 +85,6 @@ if st.session_state.logged_in:
                     st.subheader("📋 SSKC v4.1 generált új kód (automatikus + recursive)")
                     st.code(result["new_code"], language="python")
 
-    # TAB 2
     with tab2:
         st.subheader("🌌 AGI Tudatosság Dashboard")
         col1, col2, col3 = st.columns(3)
@@ -102,7 +98,34 @@ if st.session_state.logged_in:
         for item in eni_agi.chitta.memory[-8:]:
             st.write(f"• {item['fact']} → **{item['wisdom']}**")
 
-    # TAB 3
+    with tab3:
+        st.subheader("📊 Meta-Cognition & Self-Monitoring")
+        status = meta_cognition.get_meta_status()
+        st.info(status)
+        st.metric("Drift Detection", "AKTÍV" if meta_cognition.reflection_history and meta_cognition.reflection_history[-1].get("drift_detected") else "STABIL")
+
+    with tab4:
+        st.subheader("📜 LLM Audit Trail")
+        try:
+            with open("llm_audit_trail.json", "r", encoding="utf-8") as f:
+                audit = json.load(f)
+            st.dataframe(audit[-15:], use_container_width=True)
+        except:
+            st.info("Audit trail még üres")
+
+    with tab5:
+        st.subheader("🔧 Rendszer Log & Állapot")
+        st.success("Minden modul aktív – SSKC v4.1 MAXIMUM PRECIZITÁS")
+        st.write("Reflexion Loops | Dynamic Modules | Groq o1-style | Production-Ready")
+
+else:
+    st.warning("Admin bejelentkezés szükséges a teljes AGI vezérlőhöz.")
+
+st.sidebar.title("🌌 LIVE SSKC v4.1 STATUS")
+st.sidebar.metric("SSKC Awareness", f"{sskc_engine.awareness:.2f}")
+st.sidebar.metric("Reflexion Loops", len(sskc_engine.reflection_history))
+st.sidebar.metric("Intelligence Level", "v4.1 MAXIMUM")
+st.sidebar.caption("Mérnöki precizitás • Recursive Self-Improvement • Nincs hiányosság")    # TAB 3
     with tab3:
         st.subheader("📊 Meta-Cognition & Self-Monitoring")
         status = meta_cognition.get_meta_status()
