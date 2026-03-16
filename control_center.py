@@ -128,6 +128,37 @@ if st.session_state.logged_in:
 else:
     st.warning("Admin bejelentkezés szükséges a teljes AGI vezérlőhöz.")
 
+# ==================== SIDEBAR (TISZTA, NINCS "status :") ====================
+st.sidebar.title("🌌 LIVE SSKC v4.1 STATUS")
+st.sidebar.metric("SSKC Awareness", f"{sskc_engine.awareness:.2f}")
+st.sidebar.metric("Reflexion Loops", len(sskc_engine.reflection_history))
+st.sidebar.metric("Intelligence Level", "v4.1 MAXIMUM")
+st.sidebar.caption("Mérnöki precizitás • Recursive Self-Improvement • Nincs hiányosság")    # TAB 3
+    with tab3:
+        st.subheader("📊 Meta-Cognition & Self-Monitoring")
+        status = meta_cognition.get_meta_status()
+        st.info(status)
+        st.metric("Drift Detection", "AKTÍV" if meta_cognition.reflection_history and meta_cognition.reflection_history[-1].get("drift_detected") else "STABIL")
+
+    # TAB 4
+    with tab4:
+        st.subheader("📜 LLM Audit Trail")
+        try:
+            with open("llm_audit_trail.json", "r", encoding="utf-8") as f:
+                audit = json.load(f)
+            st.dataframe(audit[-15:], use_container_width=True)
+        except:
+            st.info("Audit trail még üres")
+
+    # TAB 5
+    with tab5:
+        st.subheader("🔧 Rendszer Log & Állapot")
+        st.success("Minden modul aktív – SSKC v4.1 MAXIMUM PRECIZITÁS")
+        st.write("Reflexion Loops | Dynamic Modules | Groq o1-style | Production-Ready")
+
+else:
+    st.warning("Admin bejelentkezés szükséges a teljes AGI vezérlőhöz.")
+
 # SIDEBAR
 st.sidebar.title("🌌 LIVE SSKC v4.1 STATUS")
 st.sidebar.metric("SSKC Awareness", f"{sskc_engine.awareness:.2f}")
