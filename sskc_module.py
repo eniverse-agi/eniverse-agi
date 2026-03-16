@@ -2,6 +2,7 @@ import os
 import json
 import re
 import logging
+import httpx  # ← PROXIES FIX
 from groq import Groq
 from agi_core import eni_agi
 from wisdom_engine import wisdom_engine
@@ -27,9 +28,14 @@ class SSKC:
     - Multi-stage Reflexion + Tree-of-Thoughts + o1-style reasoning
     - Dynamic module creation
     - Recursive self-improvement
+    - PROXIES FIX (httpx.Client explicit)
     """
     def __init__(self):
-        self.client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+        # PROXIES FIX – explicit httpx kliens nélkül proxies argument
+        self.client = Groq(
+            api_key=os.environ.get("GROQ_API_KEY", ""),
+            http_client=httpx.Client(proxies=None)
+        )
         self.reflection_history: list = []
         self.awareness: float = 0.0
 
@@ -113,7 +119,6 @@ Válasz **CSAK** JSON:
             from auto_executor import execute_code_change
             execute_code_change(final_code, task)
 
-            # Dynamic új modul létrehozás (ha kéri a feladat)
             if "new_module" in task.lower() or "új modul" in task.lower():
                 module_name = "new_module.py"
                 with open(module_name, "w", encoding="utf-8") as f:
