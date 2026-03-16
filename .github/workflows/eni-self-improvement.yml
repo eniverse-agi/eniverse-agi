@@ -1,12 +1,45 @@
-name: ENI Auto Execute + Redeploy
+name: ENI SSKC Auto-Execute + Full AGI Redeploy Trigger
+
 on:
   push:
     paths:
       - 'control_center.py'
+      - 'eni_utils.py'
+      - 'auto_executor.py'
+      - 'agi_core.py'
+      - 'wisdom_engine.py'
+      - 'meta_cognition.py'
+      - 'telegram_notifier.py'
+    branches:
+      - main
+
 jobs:
-  redeploy:
+  auto-redeploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Trigger Render Redeploy
-        run: curl -X POST -H "Authorization: Bearer ${{ secrets.RENDER_DEPLOY_HOOK }}" https://api.render.com/deploy/srv-...
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Trigger Render Redeploy (AGI Auto-Execute)
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            curl -X POST -H "Authorization: Bearer $RENDER_DEPLOY_HOOK" https://api.render.com/deploy/srv-...
+            echo "✅ Render redeploy trigger elküldve – AGI módosítás élesítve"
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK nincs beállítva – manuális redeploy szükséges"
+          fi
+
+      - name: Telegram Summary
+        run: echo "🤖 SSKC Auto-Execute workflow lefutott | Commit: ${{ github.event.head_commit.message }}"
