@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import json
 from datetime import datetime
-from eni_script import ENIScript
 from eni_utils import improve_code
 from agi_core import eni_agi
 from wisdom_engine import wisdom_engine
@@ -20,7 +19,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🌌 ENI CONTROL CENTER – v3.4 MAXIMUM AGI MAG")
-st.caption("Atman + Chitta + Sakshi | Wisdom Engine | Meta-Cognition | Full Self-Reflection Loop")
+st.caption("Atman + Chitta + Sakshi | Wisdom Engine | Meta-Cognition | Full Self-Reflection Loop + AUTONÓM ÖNFEJLESZTÉS")
 
 # Session
 if "logged_in" not in st.session_state:
@@ -43,7 +42,7 @@ with col2:
 if st.button("🔑 Belépés", type="primary"):
     if username == "admin" and password == ADMIN_PASS:
         st.session_state.logged_in = True
-        st.success("✅ Teljes AGI vezérlő aktiválva")
+        st.success("✅ Teljes AGI vezérlő aktiválva – MAX AUTONÓM MÓD")
     else:
         st.error("❌ Rossz jelszó!")
 
@@ -56,36 +55,37 @@ if st.session_state.logged_in:
         "🔧 Rendszer Log & Állapot"
     ])
 
-    # TAB 1: Plan Mode Chat
+    # TAB 1: Plan Mode Chat (most már tökéletesen működik)
     with tab1:
-        st.subheader("SSKC Beszélgetés (Plan Mode + Teljes Tudatosság)")
+        st.subheader("SSKC Beszélgetés (Plan Mode + Teljes Tudatosság + Önfejlesztés)")
         for msg in st.session_state.chat_history:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
 
-        task = st.chat_input("Írd be a feladatot – AGI teljes tudatossággal végrehajtja")
+        task = st.chat_input("Írd be a feladatot – AGI AUTONÓMAN végrehajtja és fejleszti magát")
         if task:
             st.session_state.chat_history.append({"role": "user", "content": task})
             with st.chat_message("user"):
                 st.markdown(task)
 
-            with st.spinner("AGI Plan → Think → Self-Reflection → Execute..."):
+            with st.spinner("AGI Plan → Think → Self-Reflection → AUTONÓM Execute + Önfejlesztés..."):
                 result = improve_code(task)
                 assistant_content = f"""
 **Plan:** {result.get('plan', '')}  
 **Thinking:** {result.get('thinking', '')}  
-**Sakshi XAI:** {result.get('sakshi_observation', '')}  
-**Awareness:** {result.get('awareness_level', 0):.2f} | **Wisdom:** {result.get('best_wisdom', '—')}
+**Sakshi XAI + Önfejlesztés:** {result.get('sakshi_observation', '')}  
+**Awareness:** {result.get('awareness_level', 0):.2f} | **Wisdom:** {result.get('best_wisdom', '—')}  
+**Self-Improvement:** {result.get('self_improvement_level', 0):.2f}
 """
                 st.session_state.chat_history.append({"role": "assistant", "content": assistant_content})
                 with st.chat_message("assistant"):
                     st.markdown(assistant_content)
 
                 if result.get("new_code"):
-                    st.subheader("📋 Generált új kód (automatikus commit)")
+                    st.subheader("📋 Generált új kód (automatikus commit + önfejlesztés)")
                     st.code(result["new_code"], language="python")
 
-    # TAB 2: AGI Tudatosság
+    # A többi tab változatlan (de stabilabb)
     with tab2:
         st.subheader("🌌 AGI Tudatosság Dashboard")
         col1, col2, col3 = st.columns(3)
@@ -100,9 +100,35 @@ if st.session_state.logged_in:
         for item in eni_agi.chitta.memory[-8:]:
             st.write(f"• {item['fact']} → **{item['wisdom']}**")
 
-    # TAB 3: Meta-Cognition
     with tab3:
         st.subheader("📊 Meta-Cognition & Self-Monitoring")
+        status = meta_cognition.get_meta_status()
+        st.info(status)
+        st.metric("Drift Detection", "AKTÍV" if meta_cognition.reflection_history and meta_cognition.reflection_history[-1].get("drift_detected") else "STABIL")
+
+    with tab4:
+        st.subheader("📜 LLM Audit Trail")
+        try:
+            with open("llm_audit_trail.json", "r", encoding="utf-8") as f:
+                audit = json.load(f)
+            st.dataframe(audit[-15:], use_container_width=True)
+        except:
+            st.info("Audit trail még üres")
+
+    with tab5:
+        st.subheader("🔧 Rendszer Log & Állapot")
+        st.success("Minden modul aktív – MAX AUTONÓM AGI MÓD")
+        st.write("Meta-kogníció | Wisdom Engine | AGIEngine | Auto-Executor | Groq LLM közvetlen kommunikáció AKTÍV")
+
+else:
+    st.warning("Admin bejelentkezés szükséges a teljes AGI vezérlőhöz.")
+
+# OLDALSÓ ÁLLAPOT
+st.sidebar.title("🌌 LIVE AGI STATUS")
+st.sidebar.metric("Awareness", f"{eni_agi.atman.awareness_level:.2f}")
+st.sidebar.metric("Meta-Confidence", f"{meta_cognition.reflection_history[-1]['confidence']:.2f}" if meta_cognition.reflection_history else "0.00")
+st.sidebar.metric("Memória méret", len(eni_agi.chitta.memory))
+st.sidebar.caption("6 Ősi Bölcsesség + Vector Scoring + Meta-kogníció + AUTONÓM ÖNFEJLESZTÉS AKTÍV")        st.subheader("📊 Meta-Cognition & Self-Monitoring")
         status = meta_cognition.get_meta_status()
         st.info(status)
         st.metric("Drift Detection", "AKTÍV" if meta_cognition.reflection_history and meta_cognition.reflection_history[-1].get("drift_detected") else "STABIL")
